@@ -1,312 +1,474 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>민원 접수 관리</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: "맑은 고딕", Malgun Gothic, sans-serif; margin: 0; background: #f2f4f7; color: #222; }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
-  h1 { font-size: 22px; margin: 0 0 4px 0; }
-  .sub { color: #666; font-size: 13px; margin-bottom: 16px; }
-  .card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .card h2 { font-size: 16px; margin: 0 0 12px 0; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .form-grid .full { grid-column: 1 / -1; }
-  label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-  input, select, textarea { width: 100%; padding: 9px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-  textarea { min-height: 70px; resize: vertical; }
-  input:focus, select:focus, textarea:focus { outline: 2px solid #2f80ed; border-color: #2f80ed; }
-  .hint { font-size: 12px; color: #888; font-weight: normal; }
-  .btn-row { margin-top: 12px; display: flex; gap: 8px; }
-  button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 18px; font-size: 14px; font-weight: bold; }
-  .btn-reg { background: #2f80ed; color: #fff; }
-  .btn-reg:hover { background: #1f6bd6; }
-  .btn-del { background: #fff; border: 1px solid #ccc; color: #333; padding: 5px 10px; font-size: 12px; font-weight: normal; }
-  .btn-del:hover { background: #fee; border-color: #e00; color: #c00; }
-  .btn-clear { background: #fff; border: 1px solid #ccc; color: #666; }
-  .list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .list-head h2 { margin: 0; }
-  .count { font-size: 13px; color: #555; margin-right: 8px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
-  th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-  th { background: #f7f9fc; }
-  td.content { text-align: left; white-space: pre-wrap; word-break: break-all; min-width: 180px; }
-  select.status { padding: 5px 6px; font-size: 13px; font-weight: bold; border-radius: 6px; }
-  select.st-접수 { background: #fff7e0; border-color: #e0b400; color: #7a5c00; }
-  select.st-처리중 { background: #e8f1ff; border-color: #2f80ed; color: #1a4fa0; }
-  select.st-완료 { background: #e9f7ee; border-color: #2e9e5b; color: #1c6b3c; }
-  .empty { text-align: center; color: #888; padding: 24px !important; }
-  @media (max-width: 760px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f2f4f8;
+    color: #1c2330;
+    font-family: "맑은 고딕", "Malgun Gothic", "돋움", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #667085; font-size: 13px; margin-bottom: 18px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #dfe3ea;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .card > h2 {
+    font-size: 16px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eceff4;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 700; color: #344054; }
+  label .req { color: #d92d20; }
+  label .hint { font-weight: 400; color: #98a2b3; }
+  input, select, textarea {
+    font: inherit;
+    color: inherit;
+    padding: 8px 10px;
+    border: 1px solid #cfd6e0;
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2f6fed;
+    box-shadow: 0 0 0 3px rgba(47,111,237,.15);
+  }
+  textarea { resize: vertical; min-height: 76px; }
+
+  .btns { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 9px 20px;
+    border: 1px solid transparent;
+  }
+  .primary { background: #2f6fed; color: #fff; }
+  .primary:hover { background: #2559c9; }
+  .ghost { background: #fff; color: #344054; border-color: #cfd6e0; }
+  .ghost:hover { background: #f5f7fa; }
+
+  .msg { margin-top: 12px; font-size: 13px; font-weight: 700; display: none; }
+  .msg.ok { display: block; color: #067647; }
+  .msg.err { display: block; color: #d92d20; }
+
+  .listhead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; margin-bottom: 12px;
+    border-bottom: 1px solid #eceff4;
+  }
+  .listhead h2 { font-size: 16px; margin: 0; }
+  .count { font-size: 13px; color: #667085; }
+  .count b { color: #2f6fed; font-size: 15px; }
+  .count .sep { color: #d0d5dd; margin: 0 4px; }
+
+  .tablebox { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 1080px; }
+  th, td {
+    border-bottom: 1px solid #e7ebf1;
+    padding: 9px 10px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+  }
+  th {
+    background: #f7f9fc;
+    font-size: 13px;
+    color: #344054;
+    white-space: nowrap;
+  }
+  td.no { color: #667085; width: 50px; }
+  td.date, td.tel, td.town, td.type { white-space: nowrap; }
+  td.date { width: 108px; }
+  td.tel { width: 120px; }
+  td.town { width: 82px; }
+  td.type { width: 100px; }
+  td.status { width: 106px; }
+  td.content { white-space: pre-wrap; word-break: break-word; min-width: 200px; }
+  td.act { width: 72px; white-space: nowrap; }
+  tbody tr:hover { background: #f9fbff; }
+  tr.overdue td.date, tr.overdue td.due { color: #d92d20; }
+  .del {
+    background: #fff; color: #d92d20; border: 1px solid #f3b8b2;
+    padding: 4px 12px; font-size: 13px; font-weight: 700;
+  }
+  .del:hover { background: #fef3f2; }
+
+  /* 목록에서 바로 바꾸는 처리 상태 */
+  select.st {
+    width: auto;
+    min-width: 92px;
+    padding: 4px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  select.st-received { background: #fff6e8; border-color: #f0c98a; color: #b25e00; }
+  select.st-doing    { background: #eaf1ff; border-color: #b9cdfb; color: #1d4ed8; }
+  select.st-done     { background: #e7f7ee; border-color: #a9dfc1; color: #067647; }
+
+  .empty { padding: 34px 10px; text-align: center; color: #98a2b3; }
+  .warn {
+    display: none;
+    margin-bottom: 16px; padding: 10px 14px;
+    background: #fffaeb; border: 1px solid #f4d27a; border-radius: 8px;
+    color: #7a5b00; font-size: 13px;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>민원 접수 관리</h1>
-  <div class="sub">더블클릭으로 열리는 단일 파일 · 인터넷 불필요 · 새로고침해도 목록 유지(localStorage 저장)</div>
+  <div class="sub">민원을 접수해 등록하고, 아래 목록에서 처리 상태를 바로 바꿀 수 있습니다. 입력한 자료는 이 컴퓨터의 브라우저에 저장되어 새로고침해도 남아 있습니다.</div>
 
-  <div class="card">
-    <h2>민원 입력</h2>
-    <div class="form-grid">
-      <div>
-        <label for="fDate">접수일</label>
-        <input type="date" id="fDate">
-      </div>
-      <div>
-        <label for="fDue">처리 기한 <span class="hint">(접수일+7일 자동)</span></label>
-        <input type="date" id="fDue">
-      </div>
-      <div>
-        <label for="fType">민원 유형</label>
-        <select id="fType">
-          <option value="">선택</option>
-          <option>도로·교통</option>
-          <option>환경·위생</option>
-          <option>복지</option>
-          <option>건축·주택</option>
-          <option>농업</option>
-          <option>기타</option>
-        </select>
-      </div>
-      <div>
-        <label for="fName">민원인</label>
-        <input type="text" id="fName" placeholder="예: 홍길동">
-      </div>
-      <div>
-        <label for="fTel">연락처</label>
-        <input type="tel" id="fTel" placeholder="예: 010-1234-5678">
-      </div>
-      <div>
-        <label for="fArea">읍면</label>
-        <select id="fArea">
-          <option value="">선택</option>
-          <option>거창읍</option>
-          <option>주상면</option>
-          <option>웅양면</option>
-          <option>고제면</option>
-          <option>북상면</option>
-          <option>위천면</option>
-          <option>마리면</option>
-          <option>남상면</option>
-          <option>남하면</option>
-          <option>신원면</option>
-          <option>가조면</option>
-          <option>가북면</option>
-        </select>
-      </div>
-      <div class="full">
-        <label for="fContent">민원 내용</label>
-        <textarea id="fContent" placeholder="민원 내용을 입력하세요"></textarea>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn-reg" id="btnReg">등록</button>
-    </div>
+  <div class="warn" id="warn">
+    이 브라우저에서는 자동 저장 기능을 쓸 수 없습니다. 창을 닫으면 목록이 사라질 수 있습니다.
   </div>
 
   <div class="card">
-    <div class="list-head">
-      <h2>민원 목록</h2>
-      <div>
-        <span class="count" id="count">총 0건</span>
-        <button class="btn-clear" id="btnClear">전체 삭제</button>
+    <h2>민원 접수 입력</h2>
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div class="field">
+          <label for="date">접수일 <span class="req">*</span></label>
+          <input type="date" id="date">
+        </div>
+        <div class="field">
+          <label for="due">처리 기한 <span class="hint">(접수일 + 7일 자동 입력)</span></label>
+          <input type="date" id="due">
+        </div>
+        <div class="field">
+          <label for="town">읍면 <span class="req">*</span></label>
+          <select id="town">
+            <option value="">선택하세요</option>
+            <option>거창읍</option>
+            <option>주상면</option>
+            <option>웅양면</option>
+            <option>고제면</option>
+            <option>북상면</option>
+            <option>위천면</option>
+            <option>마리면</option>
+            <option>남상면</option>
+            <option>남하면</option>
+            <option>신원면</option>
+            <option>가조면</option>
+            <option>가북면</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="name">민원인 <span class="req">*</span></label>
+          <input type="text" id="name" maxlength="40" placeholder="예) 홍길동">
+        </div>
+        <div class="field">
+          <label for="tel">연락처</label>
+          <input type="text" id="tel" maxlength="20" placeholder="예) 010-1234-5678">
+        </div>
+        <div class="field">
+          <label for="type">민원 유형 <span class="req">*</span></label>
+          <select id="type">
+            <option value="">선택하세요</option>
+            <option>도로·교통</option>
+            <option>환경·위생</option>
+            <option>복지</option>
+            <option>건축·주택</option>
+            <option>농업</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="content">민원 내용 <span class="req">*</span></label>
+          <textarea id="content" maxlength="1000" placeholder="민원 내용을 입력하세요."></textarea>
+        </div>
+      </div>
+      <div class="btns">
+        <button type="submit" class="primary">등록</button>
+        <button type="reset" class="ghost" id="resetBtn">입력칸 비우기</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="listhead">
+      <h2>접수 민원 목록</h2>
+      <div class="count">
+        전체 <b id="count">0</b> 건
+        <span class="sep">|</span> 접수 <b id="cReceived">0</b>
+        <span class="sep">·</span> 처리중 <b id="cDoing">0</b>
+        <span class="sep">·</span> 완료 <b id="cDone">0</b>
       </div>
     </div>
-    <div class="table-wrap">
+    <div class="tablebox">
       <table>
         <thead>
           <tr>
-            <th style="width:46px">번호</th>
-            <th style="width:100px">접수일</th>
-            <th style="width:100px">처리 기한</th>
-            <th style="width:90px">민원 유형</th>
-            <th style="width:70px">민원인</th>
-            <th style="width:120px">연락처</th>
-            <th style="width:76px">읍면</th>
+            <th>번호</th>
+            <th>접수일</th>
+            <th>처리 기한</th>
+            <th>읍면</th>
+            <th>민원 유형</th>
+            <th>민원인</th>
+            <th>연락처</th>
             <th>민원 내용</th>
-            <th style="width:110px">처리 상태</th>
-            <th style="width:60px">관리</th>
+            <th>처리 상태</th>
+            <th>관리</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
+    <div class="empty" id="empty">아직 등록된 민원이 없습니다.</div>
   </div>
 </div>
 
 <script>
 (function () {
-  var KEY = "minwon_list_v1";
+  "use strict";
+
+  var KEY = "geochang_minwon_list_v2";
+  var OLDKEY = "geochang_minwon_list_v1";
   var STATUS = ["접수", "처리중", "완료"];
-  var fDate = document.getElementById("fDate");
-  var fDue = document.getElementById("fDue");
-  var fType = document.getElementById("fType");
-  var fName = document.getElementById("fName");
-  var fTel = document.getElementById("fTel");
-  var fArea = document.getElementById("fArea");
-  var fContent = document.getElementById("fContent");
-  var tbody = document.getElementById("tbody");
-  var countEl = document.getElementById("count");
+  var STCLASS = { "접수": "st-received", "처리중": "st-doing", "완료": "st-done" };
+  var list = [];
+  var storageOK = true;
 
-  function fmt(d) {
-    var y = d.getFullYear();
-    var m = String(d.getMonth() + 1).padStart(2, "0");
-    var day = String(d.getDate()).padStart(2, "0");
-    return y + "-" + m + "-" + day;
-  }
-  // 접수일로부터 7일 뒤 날짜 문자열
-  function plus7(dateStr) {
-    var p = String(dateStr || "").split("-");
-    if (p.length !== 3) return "";
-    var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
-    if (isNaN(d.getTime())) return "";
-    d.setDate(d.getDate() + 7);
-    return fmt(d);
-  }
-
-  // 기본값: 오늘 / 오늘+7일
-  var todayStr = fmt(new Date());
-  fDate.value = todayStr;
-  fDue.value = plus7(todayStr);
-
-  // 접수일이 바뀌면 처리 기한 자동 갱신
-  fDate.addEventListener("change", function () {
-    if (fDate.value) fDue.value = plus7(fDate.value);
-  });
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $("form"), tbody = $("tbody"), msgEl = $("msg"), emptyEl = $("empty");
 
   function load() {
     try {
-      var raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      var arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return [];
-      // 기존 데이터 호환: 신규 항목 보정
-      for (var i = 0; i < arr.length; i++) {
-        var m = arr[i] || {};
-        if (!m.status || STATUS.indexOf(m.status) < 0) m.status = "접수";
-        if (!m.due && m.date) m.due = plus7(m.date);
-        if (m.type == null) m.type = "";
-        if (m.area == null) m.area = "";
-        if (m.tel == null) m.tel = "";
-      }
-      return arr;
+      var raw = localStorage.getItem(KEY) || localStorage.getItem(OLDKEY);
+      list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+      list = list.filter(function (r) { return r && typeof r === "object"; });
+      /* 예전 버전에서 저장한 자료에 빠진 항목을 채워 준다. */
+      list.forEach(function (r) {
+        if (STATUS.indexOf(r.status) < 0) r.status = "접수";
+        if (!r.type) r.type = "기타";
+        if (!r.due) r.due = addDays(r.date, 7);
+      });
     } catch (e) {
-      return [];
+      storageOK = false;
+      list = [];
+    }
+    if (!storageOK) $("warn").style.display = "block";
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+    } catch (e) {
+      storageOK = false;
+      $("warn").style.display = "block";
     }
   }
-  function save(list) {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  }
+
   function esc(s) {
     return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
-  function statusSelect(idx, cur) {
-    var h = '<select class="status st-' + esc(cur) + '" data-idx="' + idx + '">';
-    for (var i = 0; i < STATUS.length; i++) {
-      h += '<option value="' + STATUS[i] + '"' + (STATUS[i] === cur ? " selected" : "") + ">" + STATUS[i] + "</option>";
+
+  function fmt(d) {
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  function todayStr() { return fmt(new Date()); }
+
+  /* 접수일 문자열(YYYY-MM-DD)에 n일을 더한 날짜를 문자열로 돌려준다. */
+  function addDays(str, n) {
+    var p = String(str).split("-");
+    if (p.length !== 3) return "";
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + n);
+    return fmt(d);
+  }
+
+  function isOverdue(row) {
+    return row.status !== "완료" && row.due && row.due < todayStr();
+  }
+
+  /* 받침 여부에 따라 "로" / "으로"를 골라 준다. (접수로, 처리중으로) */
+  function josa(word) {
+    var s = String(word || "");
+    if (!s) return "로";
+    var code = s.charCodeAt(s.length - 1);
+    if (code < 0xac00 || code > 0xd7a3) return "로";
+    return (code - 0xac00) % 28 === 0 ? "로" : "으로";
+  }
+
+  function showMsg(text, type) {
+    msgEl.textContent = text;
+    msgEl.className = "msg " + type;
+    if (type === "ok") {
+      window.clearTimeout(showMsg.t);
+      showMsg.t = window.setTimeout(function () { msgEl.className = "msg"; }, 3000);
     }
-    return h + "</select>";
+  }
+
+  function fillDue() {
+    var d = $("date").value;
+    $("due").value = d ? addDays(d, 7) : "";
   }
 
   function render() {
-    var list = load();
-    countEl.textContent = "총 " + list.length + "건";
-    if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty">등록된 민원이 없습니다.</td></tr>';
-      return;
-    }
-    var html = "";
-    for (var i = 0; i < list.length; i++) {
-      var m = list[i];
-      html += "<tr>"
-        + "<td>" + (list.length - i) + "</td>"
-        + "<td>" + esc(m.date) + "</td>"
-        + "<td>" + esc(m.due) + "</td>"
-        + "<td>" + esc(m.type) + "</td>"
-        + "<td>" + esc(m.name) + "</td>"
-        + "<td>" + esc(m.tel) + "</td>"
-        + "<td>" + esc(m.area) + "</td>"
-        + '<td class="content">' + esc(m.content) + "</td>"
-        + "<td>" + statusSelect(i, m.status || "접수") + "</td>"
-        + '<td><button class="btn-del" data-idx="' + i + '">삭제</button></td>'
-        + "</tr>";
-    }
-    tbody.innerHTML = html;
+    var c = { "접수": 0, "처리중": 0, "완료": 0 };
+    list.forEach(function (r) {
+      if (c[r.status] == null) c[r.status] = 0;
+      c[r.status]++;
+    });
+    $("count").textContent = list.length;
+    $("cReceived").textContent = c["접수"] || 0;
+    $("cDoing").textContent = c["처리중"] || 0;
+    $("cDone").textContent = c["완료"] || 0;
+
+    emptyEl.style.display = list.length ? "none" : "block";
+
+    tbody.innerHTML = list.map(function (row, i) {
+      var opts = STATUS.map(function (s) {
+        return '<option value="' + s + '"' + (row.status === s ? " selected" : "") + ">" + s + "</option>";
+      }).join("");
+      var cls = STCLASS[row.status] || "st-received";
+
+      return '<tr' + (isOverdue(row) ? ' class="overdue"' : "") + ">" +
+        '<td class="no">' + (list.length - i) + "</td>" +
+        '<td class="date">' + esc(row.date) + "</td>" +
+        '<td class="date">' + (row.due ? esc(row.due) : "-") + "</td>" +
+        '<td class="town">' + esc(row.town) + "</td>" +
+        '<td class="type">' + esc(row.type) + "</td>" +
+        "<td>" + esc(row.name) + "</td>" +
+        '<td class="tel">' + (row.tel ? esc(row.tel) : "-") + "</td>" +
+        '<td class="content">' + esc(row.content) + "</td>" +
+        '<td class="status"><select class="st ' + cls + '" data-i="' + i + '" title="처리 상태 바꾸기">' + opts + "</select></td>" +
+        '<td class="act"><button type="button" class="del" data-i="' + i + '">삭제</button></td>' +
+      "</tr>";
+    }).join("");
   }
 
-  document.getElementById("btnReg").addEventListener("click", function () {
-    var date = fDate.value.trim();
-    var due = fDue.value.trim();
-    var type = fType.value;
-    var name = fName.value.trim();
-    var tel = fTel.value.trim();
-    var area = fArea.value;
-    var content = fContent.value.trim();
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
 
-    if (!date) { alert("접수일을 입력하세요."); fDate.focus(); return; }
-    if (!due) { due = plus7(date); fDue.value = due; }
-    if (!type) { alert("민원 유형을 선택하세요."); fType.focus(); return; }
-    if (!name) { alert("민원인을 입력하세요."); fName.focus(); return; }
-    if (!area) { alert("읍면을 선택하세요."); fArea.focus(); return; }
-    if (!content) { alert("민원 내용을 입력하세요."); fContent.focus(); return; }
+    var date = $("date").value.trim();
+    var due = $("due").value.trim();
+    var town = $("town").value;
+    var name = $("name").value.trim();
+    var tel = $("tel").value.trim();
+    var type = $("type").value;
+    var content = $("content").value.trim();
 
-    var list = load();
-    list.unshift({ date: date, due: due, type: type, name: name, tel: tel, area: area, content: content, status: "접수" });
-    save(list);
+    if (!date) { showMsg("접수일을 입력하세요.", "err"); $("date").focus(); return; }
+    if (!town) { showMsg("읍면을 선택하세요.", "err"); $("town").focus(); return; }
+    if (!type) { showMsg("민원 유형을 선택하세요.", "err"); $("type").focus(); return; }
+    if (!name) { showMsg("민원인 이름을 입력하세요.", "err"); $("name").focus(); return; }
+    if (!content) { showMsg("민원 내용을 입력하세요.", "err"); $("content").focus(); return; }
+    if (tel && !/^[0-9()+\-.\s]{7,20}$/.test(tel)) {
+      showMsg("연락처는 숫자와 - 기호로 입력하세요. (예: 010-1234-5678)", "err");
+      $("tel").focus(); return;
+    }
+    if (!due) due = addDays(date, 7);
+
+    list.unshift({
+      date: date,
+      due: due,
+      town: town,
+      name: name,
+      tel: tel,
+      type: type,
+      content: content,
+      status: "접수",
+      savedAt: new Date().toISOString()
+    });
+    save();
     render();
+    showMsg("등록되었습니다. (처리 기한 " + due + ", 전체 " + list.length + "건)", "ok");
 
-    // 입력칸 초기화 (접수일·기한은 오늘 기준으로 리셋)
-    var t = fmt(new Date());
-    fDate.value = t;
-    fDue.value = plus7(t);
-    fType.value = "";
-    fName.value = "";
-    fTel.value = "";
-    fArea.value = "";
-    fContent.value = "";
-    fName.focus();
+    $("name").value = "";
+    $("tel").value = "";
+    $("town").value = "";
+    $("type").value = "";
+    $("content").value = "";
+    $("date").value = todayStr();
+    fillDue();
+    $("name").focus();
   });
 
-  // 목록에서 처리 상태 바로 변경
+  /* 목록에서 처리 상태를 바꾸면 바로 저장한다. */
   tbody.addEventListener("change", function (e) {
-    var sel = e.target.closest ? e.target.closest("select.status") : null;
+    var sel = e.target.closest("select.st");
     if (!sel) return;
-    var idx = parseInt(sel.getAttribute("data-idx"), 10);
-    var list = load();
-    if (isNaN(idx) || idx < 0 || idx >= list.length) return;
-    if (STATUS.indexOf(sel.value) < 0) return;
-    list[idx].status = sel.value;
-    save(list);
+    var i = Number(sel.getAttribute("data-i"));
+    var row = list[i];
+    if (!row) return;
+    row.status = sel.value;
+    save();
     render();
+    showMsg("'" + row.name + "' 님의 민원을 " + row.status + josa(row.status) + " 바꿨습니다.", "ok");
   });
 
   tbody.addEventListener("click", function (e) {
-    var btn = e.target.closest ? e.target.closest(".btn-del") : null;
+    var btn = e.target.closest(".del");
     if (!btn) return;
-    var idx = parseInt(btn.getAttribute("data-idx"), 10);
-    var list = load();
-    if (isNaN(idx) || idx < 0 || idx >= list.length) return;
-    if (!confirm("이 민원을 삭제할까요?")) return;
-    list.splice(idx, 1);
-    save(list);
+    var i = Number(btn.getAttribute("data-i"));
+    var row = list[i];
+    if (!row) return;
+    if (!window.confirm("'" + row.name + "' 님의 민원을 삭제할까요?")) return;
+    list.splice(i, 1);
+    save();
     render();
+    showMsg("삭제되었습니다.", "ok");
   });
 
-  document.getElementById("btnClear").addEventListener("click", function () {
-    var list = load();
-    if (list.length === 0) { alert("삭제할 목록이 없습니다."); return; }
-    if (!confirm("전체 " + list.length + "건을 모두 삭제할까요?")) return;
-    save([]);
-    render();
+  /* 접수일을 바꾸면 처리 기한(접수일 + 7일)도 다시 계산한다. */
+  $("date").addEventListener("change", fillDue);
+  $("date").addEventListener("input", fillDue);
+
+  $("resetBtn").addEventListener("click", function () {
+    window.setTimeout(function () {
+      $("date").value = todayStr();
+      fillDue();
+      $("name").focus();
+    }, 0);
   });
 
+  load();
+  save();
+  $("date").value = todayStr();
+  fillDue();
   render();
 })();
 </script>

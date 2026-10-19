@@ -1,152 +1,670 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>시설 점검 일지</title>
 <style>
-body{font-family:맑은고딕,sans-serif;max-width:1000px;margin:20px auto;padding:0 15px;background:#f4f6f8}
-h1{text-align:center}
-.box{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin-bottom:15px}
-label{display:block;margin:8px 0 3px;font-weight:bold}
-input,select,textarea{width:100%;padding:8px;box-sizing:border-box;border:1px solid #bbb;border-radius:4px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{padding:10px 16px;border:none;border-radius:4px;cursor:pointer}
-.btn-add{background:#1a73e8;color:#fff;width:100%;margin-top:12px;font-size:16px}
-table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#eef2f7}
-td.content{text-align:left;white-space:pre-wrap}
-.del{background:#fff;border:1px solid #ccc}
-.count{margin:5px 0;font-weight:bold}
-th.sort{cursor:pointer;text-decoration:underline}
-.search{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
-tr.emergency{background:#ffe8e8}
-td.emergency{color:#c00;font-weight:bold}
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f2f4f8;
+    color: #1c2330;
+    font-family: "맑은 고딕", "Malgun Gothic", "돋움", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #667085; font-size: 13px; margin-bottom: 18px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #dfe3ea;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .card > h2 {
+    font-size: 16px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eceff4;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 700; color: #344054; }
+  label .req { color: #d92d20; }
+  label .hint { font-weight: 400; color: #98a2b3; }
+  input, select, textarea {
+    font: inherit;
+    color: inherit;
+    padding: 8px 10px;
+    border: 1px solid #cfd6e0;
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2f6fed;
+    box-shadow: 0 0 0 3px rgba(47,111,237,.15);
+  }
+  textarea { resize: vertical; min-height: 76px; }
+
+  .btns { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 9px 20px;
+    border: 1px solid transparent;
+  }
+  .primary { background: #2f6fed; color: #fff; }
+  .primary:hover { background: #2559c9; }
+  .ghost { background: #fff; color: #344054; border-color: #cfd6e0; }
+  .ghost:hover { background: #f5f7fa; }
+
+  .msg { margin-top: 12px; font-size: 13px; font-weight: 700; display: none; }
+  .msg.ok { display: block; color: #067647; }
+  .msg.err { display: block; color: #d92d20; }
+
+  /* ---- 목록 위 검색·고르기 줄 ---- */
+  .listhead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; margin-bottom: 12px;
+    border-bottom: 1px solid #eceff4;
+  }
+  .listhead h2 { font-size: 16px; margin: 0; }
+  .count { font-size: 13px; color: #667085; }
+  .count b { color: #2f6fed; font-size: 15px; }
+  .count .sep { color: #d0d5dd; margin: 0 6px; }
+
+  .filters {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 12px; margin-bottom: 12px;
+    background: #f7f9fc; border: 1px solid #e7ebf1; border-radius: 8px;
+  }
+  .filters input[type="search"] { flex: 1 1 240px; min-width: 200px; }
+  .filters select { width: auto; min-width: 130px; }
+  .filters .ghost, .filters .csv { padding: 8px 14px; }
+  .filters .tag { font-size: 13px; font-weight: 700; color: #344054; }
+  .filters .hintline {
+    flex: 1 0 100%;
+    font-size: 12px; color: #667085;
+    border-top: 1px dashed #dfe3ea; padding-top: 8px;
+  }
+  .csv { background: #0b7a4b; color: #fff; border-color: #0b7a4b; }
+  .csv:hover { background: #096340; }
+
+  .tablebox { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 1120px; }
+  th, td {
+    border-bottom: 1px solid #e7ebf1;
+    padding: 9px 10px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+  }
+  th {
+    background: #f7f9fc;
+    font-size: 13px;
+    color: #344054;
+    white-space: nowrap;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { background: #eef3fb; color: #1d4ed8; }
+  th .arrow { color: #98a2b3; font-size: 11px; }
+  th.sorted .arrow { color: #2f6fed; }
+
+  td.no { color: #667085; width: 50px; }
+  td.date, td.next, td.town, td.item { white-space: nowrap; }
+  td.date { width: 104px; }
+  td.next { width: 152px; }
+  td.town { width: 82px; }
+  td.item { width: 110px; }
+  td.facility { min-width: 150px; white-space: nowrap; }
+  td.manager { width: 90px; white-space: nowrap; }
+  td.action { white-space: pre-wrap; word-break: break-word; min-width: 200px; }
+  td.act { width: 72px; white-space: nowrap; }
+
+  tbody tr:hover { background: #f9fbff; }
+
+  /* 결과가 "긴급 조치"인 줄: 빨간색으로 표시 */
+  tr.urgent { background: #fff6f6; }
+  tr.urgent:hover { background: #ffeeee; }
+  tr.urgent td.date { color: #d92d20; font-weight: 700; }
+  tr.urgent td.next { color: #d92d20; font-weight: 700; }
+  tr.urgent td.town, tr.urgent td.facility { color: #7a2a24; }
+  tr.urgent td.result::after {
+    content: "긴급";
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #d92d20;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    vertical-align: 1px;
+  }
+
+  .del {
+    background: #fff; color: #d92d20; border: 1px solid #f3b8b2;
+    padding: 4px 12px; font-size: 13px; font-weight: 700;
+  }
+  .del:hover { background: #fef3f2; }
+
+  /* 목록에서 바로 바꾸는 점검 결과 */
+  select.st {
+    width: auto;
+    min-width: 100px;
+    padding: 4px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  select.st-good   { background: #e7f7ee; border-color: #a9dfc1; color: #067647; }
+  select.st-repair { background: #fff6e8; border-color: #f0c98a; color: #b25e00; }
+  select.st-urgent { background: #fef3f2; border-color: #f3b8b2; color: #d92d20; }
+
+  .empty { padding: 34px 10px; text-align: center; color: #98a2b3; }
+  .warn {
+    display: none;
+    margin-bottom: 16px; padding: 10px 14px;
+    background: #fffaeb; border: 1px solid #f4d27a; border-radius: 8px;
+    color: #7a5b00; font-size: 13px;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
-<h1>시설 점검 일지</h1>
+<div class="wrap">
+  <h1>시설 점검 일지</h1>
+  <div class="sub">시설 점검 결과를 기록하고, 다음 점검일은 결과에 따라 자동으로 계산됩니다(양호 90일 · 보수 필요 14일 · 긴급 조치 3일). 입력한 자료는 이 컴퓨터의 브라우저에 저장되어 새로고침해도 남아 있습니다.</div>
 
-<div class="box">
-<label>점검일</label>
-<input type="date" id="fDate">
-<div class="row">
-<div><label>읍면</label><select id="fTown"></select></div>
-<div><label>시설명</label><input type="text" id="fName" placeholder="예: 거창문화센터"></div>
-</div>
-<div class="row">
-<div><label>점검항목</label><input type="text" id="fItem" placeholder="예: 소방, 전기, 위생"></div>
-<div><label>결과</label><select id="fResult"><option>양호</option><option>보수 필요</option><option>긴급 조치</option></select></div>
-</div>
-<div class="row">
-<div><label>다음 점검일 (결과에 따라 자동)</label><input type="date" id="fNext"></div>
-<div><label>담당자</label><input type="text" id="fManager" placeholder="예: 김거창"></div>
-</div>
-<label>조치사항</label>
-<textarea id="fAct" rows="3" placeholder="조치 내용을 적어 주세요 (없으면 없음)"></textarea>
-<button class="btn-add" onclick="addItem()">등록</button>
-</div>
+  <div class="warn" id="warn">
+    이 브라우저에서는 자동 저장 기능을 쓸 수 없습니다. 창을 닫으면 목록이 사라질 수 있습니다.
+  </div>
 
-<div class="box">
-<div class="search">
-<div><label>찾기 (시설명 또는 조치사항)</label><input type="text" id="qText" placeholder="예: 문화센터, 보수" oninput="show()"></div>
-<div><label>읍면으로 보기</label><select id="qTown" onchange="show()"><option value="">전체</option></select></div>
-<div><label>결과로 보기</label><select id="qResult" onchange="show()"><option value="">전체</option><option>양호</option><option>보수 필요</option><option>긴급 조치</option></select></div>
-</div>
-</div>
+  <div class="card">
+    <h2>시설 점검 입력</h2>
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div class="field">
+          <label for="date">점검일 <span class="req">*</span></label>
+          <input type="date" id="date">
+        </div>
+        <div class="field">
+          <label for="next">다음 점검일 <span class="hint">(결과에 따라 자동 입력)</span></label>
+          <input type="date" id="next">
+        </div>
+        <div class="field">
+          <label for="town">읍면 <span class="req">*</span></label>
+          <select id="town">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="facility">시설명 <span class="req">*</span></label>
+          <input type="text" id="facility" maxlength="60" placeholder="예) 거창읍 복지회관">
+        </div>
+        <div class="field">
+          <label for="item">점검항목 <span class="req">*</span></label>
+          <select id="item">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="result">결과 <span class="req">*</span></label>
+          <select id="result">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="manager">담당자 <span class="req">*</span></label>
+          <input type="text" id="manager" maxlength="30" placeholder="예) 홍길동">
+        </div>
+        <div class="field full">
+          <label for="action">조치사항 <span class="hint">(보수 필요·긴급 조치일 때 적어 주세요)</span></label>
+          <textarea id="action" maxlength="1000" placeholder="점검 결과에 따른 조치 내용을 입력하세요."></textarea>
+        </div>
+      </div>
+      <div class="btns">
+        <button type="submit" class="primary">등록</button>
+        <button type="reset" class="ghost" id="resetBtn">입력칸 비우기</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
 
-<div class="count" id="count"></div>
-<button onclick="downCsv()" style="background:#0a7b3d;color:#fff;margin-bottom:10px">지금 보이는 목록 CSV로 저장 (엑셀용)</button>
-<div class="box" style="overflow:auto">
-<table>
-<thead><tr><th>번호</th><th class="sort" id="thDate" onclick="toggleSort()" title="누르면 날짜 순으로 바뀝니다">점검일 ▲▼</th><th>읍면</th><th>시설명</th><th>점검항목</th><th>결과</th><th>조치사항</th><th>다음 점검일</th><th>담당자</th><th>삭제</th></tr></thead>
-<tbody id="list"></tbody>
-</table>
+  <div class="card">
+    <div class="listhead">
+      <h2>시설 점검 목록</h2>
+      <div class="count">
+        표시 <b id="count">0</b>건
+        <span class="sep">/</span> 전체 <b id="countAll">0</b>건
+        <span class="sep">|</span> 양호 <b id="cGood">0</b>
+        · 보수 필요 <b id="cRepair">0</b>
+        · 긴급 조치 <b id="cUrgent" class="urgentNum">0</b>
+      </div>
+    </div>
+
+    <div class="filters">
+      <span class="tag">찾기</span>
+      <input type="search" id="q" placeholder="시설명 또는 담당자로 검색">
+      <select id="fTown" title="읍면으로 골라 보기"></select>
+      <select id="fResult" title="결과로 골라 보기"></select>
+      <button type="button" class="ghost" id="clearFilter">조건 지우기</button>
+      <button type="button" class="csv" id="csvBtn">엑셀(CSV)로 내려받기</button>
+      <div class="hintline">
+        내려받으면 지금 화면에 보이는 목록만, 보이는 순서 그대로 저장됩니다. 받은 파일을 두 번 눌러 열면 엑셀에서 한글이 깨지지 않습니다.
+      </div>
+    </div>
+
+    <div class="tablebox">
+      <table>
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th class="sortable" id="thDate" title="눌러서 점검일 순으로 정렬">점검일 <span class="arrow" id="arrowDate">▼</span></th>
+            <th>다음 점검일</th>
+            <th>읍면</th>
+            <th>시설명</th>
+            <th>점검항목</th>
+            <th>결과</th>
+            <th>조치사항</th>
+            <th>담당자</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">아직 등록된 점검 일지가 없습니다.</div>
+  </div>
 </div>
 
 <script>
-var towns=["거창읍","주상면","웅양면","고제면","북상면","위천면","마리면","남상면","남하면","신원면","가조면","가북면"];
-var KEY="geochang_check_list";
-var items=[];
-try{items=JSON.parse(localStorage.getItem(KEY)||"[]");}catch(e){items=[];}
+(function () {
+  "use strict";
 
-var fTown=document.getElementById("fTown");
-towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;fTown.appendChild(o);});
-var qTown=document.getElementById("qTown");
-towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;o.value=t;qTown.appendChild(o);});
-var sortAsc=true;
-function toggleSort(){sortAsc=!sortAsc;show();}
+  var KEY = "geochang_facility_list_v1";
+  var RESULTS = ["양호", "보수 필요", "긴급 조치"];
+  var RESULT_DAYS = { "양호": 90, "보수 필요": 14, "긴급 조치": 3 };
+  var RESULT_CLASS = { "양호": "st-good", "보수 필요": "st-repair", "긴급 조치": "st-urgent" };
+  var TOWNS = ["거창읍", "주상면", "웅양면", "고제면", "북상면", "위천면",
+               "마리면", "남상면", "남하면", "신원면", "가조면", "가북면"];
+  var ITEMS = ["소방설비", "전기설비", "상하수도", "건축·구조", "승강기",
+               "냉난방·공조", "조경·환경", "기타"];
 
-var fDate=document.getElementById("fDate");
-var fResult=document.getElementById("fResult");
-var fNext=document.getElementById("fNext");
-function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
-function gapDays(r){if(r==="긴급 조치")return 3;if(r==="보수 필요")return 14;return 90;}
-function plusDays(s,n){var d=new Date(s);if(isNaN(d))return "";d.setDate(d.getDate()+n);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
-function autoNext(){if(!fDate.value){fNext.value="";return;}fNext.value=plusDays(fDate.value,gapDays(fResult.value));}
-fDate.value=today();
-autoNext();
-fDate.onchange=autoNext;
-fResult.onchange=autoNext;
+  var list = [];            /* 저장된 전체 점검 일지 */
+  var seq = 1;              /* 일지 고유 번호표 */
+  var sortAsc = false;      /* 점검일 정렬: false = 최근 날짜 먼저 */
+  var storageOK = true;
 
-function save(){localStorage.setItem(KEY,JSON.stringify(items));}
-function addItem(){
-var fac=document.getElementById("fName").value.trim();
-var item=document.getElementById("fItem").value.trim();
-var act=document.getElementById("fAct").value.trim();
-if(!fDate.value){alert("점검일을 입력해 주세요.");return;}
-if(!fac){alert("시설명을 입력해 주세요.");return;}
-if(!item){alert("점검항목을 입력해 주세요.");return;}
-items.unshift({date:fDate.value,town:fTown.value,name:fac,item:item,result:fResult.value,act:act,next:fNext.value,manager:document.getElementById("fManager").value.trim()});
-save();show();
-document.getElementById("fName").value="";document.getElementById("fItem").value="";document.getElementById("fAct").value="";document.getElementById("fManager").value="";
-document.getElementById("fResult").value="양호";autoNext();
-}
-function delItem(i){if(confirm("삭제할까요?")){items.splice(i,1);save();show();}}
-function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function getRows(){
-var q=(document.getElementById("qText").value||"").trim();
-var qt=document.getElementById("qTown").value;
-var qr=document.getElementById("qResult").value;
-var rows=[];
-items.forEach(function(m,i){
-if(qt&&m.town!==qt)return;
-if(qr&&m.result!==qr)return;
-if(q&&(m.name||"").indexOf(q)<0&&(m.act||"").indexOf(q)<0&&(m.item||"").indexOf(q)<0)return;
-rows.push({m:m,i:i});
-});
-rows.sort(function(a,b){if(sortAsc)return a.m.date<b.m.date?-1:1;return a.m.date>b.m.date?-1:1;});
-return rows;
-}
-function downCsv(){
-var rows=getRows();
-if(!rows.length){alert("저장할 목록이 없습니다.");return;}
-function q(s){return '"'+String(s==null?"":s).replace(/"/g,'""')+'"';}
-var lines=["점검일,읍면,시설명,점검항목,결과,조치사항,다음점검일,담당자"];
-rows.forEach(function(r){var m=r.m;lines.push([m.date,m.town,m.name,m.item,m.result,m.act,m.next,m.manager].map(q).join(","));});
-var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
-var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="시설점검일지.csv";a.click();
-setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-}
-function show(){
-var tb=document.getElementById("list");tb.innerHTML="";
-var rows=getRows();
-document.getElementById("count").textContent="전체 "+items.length+"건 중 "+rows.length+"건 보기";
-document.getElementById("thDate").textContent="점검일 "+(sortAsc?"▲":"▼");
-rows.forEach(function(r,idx){
-var m=r.m,i=r.i;
-var em=(m.result==="긴급 조치");
-var tr=document.createElement("tr");
-if(em)tr.className="emergency";
-tr.innerHTML="<td>"+(idx+1)+"</td><td>"+esc(m.date)+"</td><td>"+esc(m.town)+"</td><td>"+esc(m.name)+"</td><td>"+esc(m.item)+"</td><td class='"+(em?"emergency":"")+"'>"+esc(m.result)+"</td><td class='content'>"+esc(m.act)+"</td><td>"+esc(m.next)+"</td><td>"+esc(m.manager)+"</td>";
-var td2=document.createElement("td");
-var b=document.createElement("button");b.className="del";b.textContent="삭제";
-b.onclick=(function(idx){return function(){delItem(idx);};})(i);
-td2.appendChild(b);tr.appendChild(td2);
-tb.appendChild(tr);
-});
-}
-show();
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $("form"), tbody = $("tbody"), msgEl = $("msg"), emptyEl = $("empty");
+
+  /* ---------- 저장 / 불러오기 ---------- */
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+      list = list.filter(function (r) { return r && typeof r === "object"; });
+
+      /* 빠진 항목을 채워 준다. */
+      list.forEach(function (r) {
+        if (RESULTS.indexOf(r.result) < 0) r.result = "양호";
+        if (!r.next) r.next = addDays(r.date, RESULT_DAYS[r.result]);
+        if (r.id == null) r.id = seq++;
+        else if (Number(r.id) >= seq) seq = Number(r.id) + 1;
+      });
+    } catch (e) {
+      storageOK = false;
+      list = [];
+    }
+    if (!storageOK) $("warn").style.display = "block";
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+    } catch (e) {
+      storageOK = false;
+      $("warn").style.display = "block";
+    }
+  }
+
+  /* ---------- 작은 도구들 ---------- */
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function fmt(d) {
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  function todayStr() { return fmt(new Date()); }
+
+  /* 점검일 문자열(YYYY-MM-DD)에 n일을 더한 날짜를 돌려준다. */
+  function addDays(str, n) {
+    var p = String(str || "").split("-");
+    if (p.length !== 3) return "";
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + Number(n || 0));
+    return fmt(d);
+  }
+
+  /* 결과에 따라 다음 점검일을 계산한다. */
+  function nextOf(dateStr, result) {
+    var n = RESULT_DAYS[result];
+    return n ? addDays(dateStr, n) : "";
+  }
+
+  function isUrgent(row) { return row.result === "긴급 조치"; }
+
+  /* 받침 여부에 따라 "로" / "으로"를 골라 준다. (양호로, 보수 필요로, 긴급 조치로) */
+  function josa(word) {
+    var s = String(word || "");
+    if (!s) return "로";
+    var code = s.charCodeAt(s.length - 1);
+    if (code < 0xac00 || code > 0xd7a3) return "로";
+    return (code - 0xac00) % 28 === 0 ? "로" : "으로";
+  }
+
+  function showMsg(text, type) {
+    msgEl.textContent = text;
+    msgEl.className = "msg " + type;
+    if (type === "ok") {
+      window.clearTimeout(showMsg.t);
+      showMsg.t = window.setTimeout(function () { msgEl.className = "msg"; }, 3000);
+    }
+  }
+
+  function fillNext() {
+    $("next").value = nextOf($("date").value, $("result").value);
+  }
+
+  function fillSelect(sel, items, allLabel) {
+    var html = allLabel ? '<option value="">' + allLabel + "</option>" : '<option value="">선택하세요</option>';
+    html += items.map(function (v) { return "<option>" + esc(v) + "</option>"; }).join("");
+    sel.innerHTML = html;
+  }
+
+  /* ---------- 검색 · 고르기 · 정렬을 거친 목록 ---------- */
+
+  function view() {
+    var q = $("q").value.trim().toLowerCase();
+    var town = $("fTown").value;
+    var result = $("fResult").value;
+
+    var rows = list.filter(function (r) {
+      if (town && r.town !== town) return false;
+      if (result && r.result !== result) return false;
+      if (q) {
+        var hay = (String(r.facility || "") + " " + String(r.manager || "")).toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+
+    rows.sort(function (a, b) {
+      var x = String(a.date || ""), y = String(b.date || "");
+      if (x === y) return (Number(a.id) || 0) - (Number(b.id) || 0);
+      return sortAsc ? (x < y ? -1 : 1) : (x > y ? -1 : 1);
+    });
+    return rows;
+  }
+
+  function render() {
+    var rows = view();
+
+    var c = { "양호": 0, "보수 필요": 0, "긴급 조치": 0 };
+    rows.forEach(function (r) {
+      if (RESULTS.indexOf(r.result) < 0) r.result = "양호";
+      c[r.result]++;
+    });
+
+    $("count").textContent = rows.length;
+    $("countAll").textContent = list.length;
+    $("cGood").textContent = c["양호"];
+    $("cRepair").textContent = c["보수 필요"];
+    $("cUrgent").textContent = c["긴급 조치"];
+    $("cUrgent").style.color = c["긴급 조치"] ? "#d92d20" : "";
+
+    $("arrowDate").textContent = sortAsc ? "▲" : "▼";
+    $("thDate").className = "sortable sorted";
+
+    if (!rows.length) {
+      emptyEl.textContent = list.length ? "조건에 맞는 점검 일지가 없습니다." : "아직 등록된 점검 일지가 없습니다.";
+      emptyEl.style.display = "block";
+    } else {
+      emptyEl.style.display = "none";
+    }
+
+    tbody.innerHTML = rows.map(function (row, i) {
+      var opts = RESULTS.map(function (s) {
+        return '<option value="' + s + '"' + (row.result === s ? " selected" : "") + ">" + s + "</option>";
+      }).join("");
+      var cls = RESULT_CLASS[row.result] || "st-good";
+
+      return '<tr' + (isUrgent(row) ? ' class="urgent"' : "") + ">" +
+        '<td class="no">' + (i + 1) + "</td>" +
+        '<td class="date">' + esc(row.date) + "</td>" +
+        '<td class="next">' + (row.next ? esc(row.next) : "-") + "</td>" +
+        '<td class="town">' + esc(row.town) + "</td>" +
+        '<td class="facility">' + esc(row.facility) + "</td>" +
+        '<td class="item">' + esc(row.item) + "</td>" +
+        '<td class="result"><select class="st ' + cls + '" data-id="' + row.id + '" title="점검 결과 바꾸기">' + opts + "</select></td>" +
+        '<td class="action">' + (row.action ? esc(row.action) : "-") + "</td>" +
+        '<td class="manager">' + esc(row.manager) + "</td>" +
+        '<td class="act"><button type="button" class="del" data-id="' + row.id + '">삭제</button></td>' +
+      "</tr>";
+    }).join("");
+  }
+
+  function findById(id) {
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].id) === String(id)) return i;
+    }
+    return -1;
+  }
+
+  /* ---------- 등록 ---------- */
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    var date = $("date").value.trim();
+    var town = $("town").value;
+    var facility = $("facility").value.trim();
+    var item = $("item").value;
+    var result = $("result").value;
+    var manager = $("manager").value.trim();
+    var action = $("action").value.trim();
+    var next = $("next").value.trim();
+
+    if (!date) { showMsg("점검일을 입력하세요.", "err"); $("date").focus(); return; }
+    if (!town) { showMsg("읍면을 선택하세요.", "err"); $("town").focus(); return; }
+    if (!facility) { showMsg("시설명을 입력하세요.", "err"); $("facility").focus(); return; }
+    if (!item) { showMsg("점검항목을 선택하세요.", "err"); $("item").focus(); return; }
+    if (!result) { showMsg("점검 결과를 선택하세요.", "err"); $("result").focus(); return; }
+    if (!manager) { showMsg("담당자를 입력하세요.", "err"); $("manager").focus(); return; }
+    if (!next) next = nextOf(date, result);
+
+    list.push({
+      id: seq++,
+      date: date,
+      next: next,
+      town: town,
+      facility: facility,
+      item: item,
+      result: result,
+      action: action,
+      manager: manager,
+      savedAt: new Date().toISOString()
+    });
+    save();
+    render();
+    showMsg("등록되었습니다. (다음 점검일 " + next + ", 전체 " + list.length + "건)", "ok");
+
+    $("facility").value = "";
+    $("item").value = "";
+    $("result").value = "";
+    $("action").value = "";
+    $("town").value = "";
+    $("date").value = todayStr();
+    fillNext();
+    $("facility").focus();
+  });
+
+  /* ---------- 목록 안에서 결과 바꾸기 / 삭제 ---------- */
+
+  tbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("select.st");
+    if (!sel) return;
+    var i = findById(sel.getAttribute("data-id"));
+    if (i < 0) return;
+    var row = list[i];
+    row.result = sel.value;
+    row.next = nextOf(row.date, row.result);   /* 결과가 바뀌면 다음 점검일도 다시 계산 */
+    save();
+    render();
+    showMsg("'" + row.facility + "' 점검 결과를 " + row.result + josa(row.result) +
+             " 바꿨습니다. (다음 점검일 " + row.next + ")", "ok");
+  });
+
+  tbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".del");
+    if (!btn) return;
+    var i = findById(btn.getAttribute("data-id"));
+    if (i < 0) return;
+    var row = list[i];
+    if (!window.confirm("'" + row.facility + "' 점검 일지를 삭제할까요?")) return;
+    list.splice(i, 1);
+    save();
+    render();
+    showMsg("삭제되었습니다.", "ok");
+  });
+
+  /* ---------- 검색창 · 고르기 칸 · 정렬 ---------- */
+
+  $("q").addEventListener("input", render);
+  $("fTown").addEventListener("change", render);
+  $("fResult").addEventListener("change", render);
+
+  $("clearFilter").addEventListener("click", function () {
+    $("q").value = "";
+    $("fTown").value = "";
+    $("fResult").value = "";
+    render();
+    $("q").focus();
+  });
+
+  /* ---------- 지금 보이는 목록을 CSV(엑셀) 파일로 내려받기 ---------- */
+
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    if (/[",\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadCsv(text, filename) {
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  $("csvBtn").addEventListener("click", function () {
+    var rows = view();   /* 검색·읍면·결과 조건과 점검일 정렬이 적용된, 지금 화면의 목록 */
+    if (!rows.length) {
+      showMsg("내려받을 점검 일지가 없습니다. 검색 조건을 확인해 주세요.", "err");
+      return;
+    }
+
+    var head = ["번호", "점검일", "다음점검일", "읍면", "시설명", "점검항목", "결과", "조치사항", "담당자", "긴급여부"];
+    var lines = [head.map(csvCell).join(",")];
+    rows.forEach(function (r, i) {
+      lines.push([
+        i + 1, r.date, r.next, r.town, r.facility, r.item, r.result, r.action, r.manager,
+        isUrgent(r) ? "O" : ""
+      ].map(csvCell).join(","));
+    });
+
+    /* 맨 앞의 \uFEFF(BOM) 덕분에 엑셀에서 한글이 깨지지 않는다. 줄바꿈은 엑셀용으로 CRLF. */
+    var csv = "\uFEFF" + lines.join("\r\n") + "\r\n";
+    var fname = "시설점검일지_" + todayStr() + ".csv";
+    try {
+      downloadCsv(csv, fname);
+      showMsg(rows.length + "건을 내려받았습니다. (" + fname + " — 내려받은 파일 폴더에서 확인하세요)", "ok");
+    } catch (err) {
+      showMsg("내려받기에 실패했습니다. 다른 브라우저(엣지·크롬)에서 열어 다시 시도해 주세요.", "err");
+    }
+  });
+
+  /* 점검일 제목을 누르면 날짜 순으로 정렬(한 번 더 누르면 반대 순서) */
+  $("thDate").addEventListener("click", function () {
+    sortAsc = !sortAsc;
+    render();
+  });
+
+  /* 점검일이나 결과를 바꾸면 다음 점검일도 다시 계산한다. */
+  $("date").addEventListener("change", fillNext);
+  $("date").addEventListener("input", fillNext);
+  $("result").addEventListener("change", fillNext);
+
+  $("resetBtn").addEventListener("click", function () {
+    window.setTimeout(function () {
+      $("date").value = todayStr();
+      fillNext();
+      $("facility").focus();
+    }, 0);
+  });
+
+  /* ---------- 시작 ---------- */
+
+  fillSelect($("town"), TOWNS, null);
+  fillSelect($("item"), ITEMS, null);
+  fillSelect($("result"), RESULTS, null);
+  fillSelect($("fTown"), TOWNS, "읍면 전체");
+  fillSelect($("fResult"), RESULTS, "결과 전체");
+
+  load();
+  save();
+  $("date").value = todayStr();
+  fillNext();
+  render();
+})();
 </script>
 </body>
 </html>

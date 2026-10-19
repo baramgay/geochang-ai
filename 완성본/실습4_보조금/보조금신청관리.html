@@ -1,153 +1,667 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보조금 신청 관리</title>
 <style>
-body{font-family:맑은고딕,sans-serif;max-width:1000px;margin:20px auto;padding:0 15px;background:#f4f6f8}
-h1{text-align:center}
-.box{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin-bottom:15px}
-label{display:block;margin:8px 0 3px;font-weight:bold}
-input,select{width:100%;padding:8px;box-sizing:border-box;border:1px solid #bbb;border-radius:4px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{padding:10px 16px;border:none;border-radius:4px;cursor:pointer}
-.btn-add{background:#1a73e8;color:#fff;width:100%;margin-top:12px;font-size:16px}
-table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#eef2f7}
-td.amt{text-align:right}
-.status{padding:5px;border-radius:4px}
-.del{background:#fff;border:1px solid #ccc}
-.count{margin:5px 0;font-weight:bold}
-.sum{margin:5px 0;font-weight:bold;color:#0a7b3d;font-size:16px}
-th.sort{cursor:pointer;text-decoration:underline}
-.search{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f2f4f8;
+    color: #1c2330;
+    font-family: "맑은 고딕", "Malgun Gothic", "돋움", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #667085; font-size: 13px; margin-bottom: 18px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #dfe3ea;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .card > h2 {
+    font-size: 16px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eceff4;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 700; color: #344054; }
+  label .req { color: #d92d20; }
+  label .hint { font-weight: 400; color: #98a2b3; }
+  input, select, textarea {
+    font: inherit;
+    color: inherit;
+    padding: 8px 10px;
+    border: 1px solid #cfd6e0;
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2f6fed;
+    box-shadow: 0 0 0 3px rgba(47,111,237,.15);
+  }
+
+  .btns { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 9px 20px;
+    border: 1px solid transparent;
+  }
+  .primary { background: #2f6fed; color: #fff; }
+  .primary:hover { background: #2559c9; }
+  .ghost { background: #fff; color: #344054; border-color: #cfd6e0; }
+  .ghost:hover { background: #f5f7fa; }
+
+  .msg { margin-top: 12px; font-size: 13px; font-weight: 700; display: none; }
+  .msg.ok { display: block; color: #067647; }
+  .msg.err { display: block; color: #d92d20; }
+
+  /* ---- 승인 금액 합계 줄 ---- */
+  .summary {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    margin-bottom: 12px; padding: 12px 16px;
+    background: #eef7f1; border: 1px solid #b8e0c8; border-radius: 8px;
+  }
+  .summary .label { font-size: 14px; font-weight: 700; color: #05603a; }
+  .summary .label .note { font-weight: 400; color: #4b7a63; font-size: 12px; }
+  .summary .value { font-size: 20px; font-weight: 700; color: #067647; }
+  .summary .value small { font-size: 13px; font-weight: 400; color: #4b7a63; }
+  .summary .side { font-size: 13px; color: #4b7a63; }
+
+  /* ---- 목록 위 검색·고르기 줄 ---- */
+  .listhead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; margin-bottom: 12px;
+    border-bottom: 1px solid #eceff4;
+  }
+  .listhead h2 { font-size: 16px; margin: 0; }
+  .count { font-size: 13px; color: #667085; }
+  .count b { color: #2f6fed; font-size: 15px; }
+  .count .sep { color: #d0d5dd; margin: 0 6px; }
+
+  .filters {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 12px; margin-bottom: 12px;
+    background: #f7f9fc; border: 1px solid #e7ebf1; border-radius: 8px;
+  }
+  .filters input[type="search"] { flex: 1 1 240px; min-width: 200px; }
+  .filters select { width: auto; min-width: 130px; }
+  .filters .ghost, .filters .csv { padding: 8px 14px; }
+  .filters .tag { font-size: 13px; font-weight: 700; color: #344054; }
+  .filters .hintline {
+    flex: 1 0 100%;
+    font-size: 12px; color: #667085;
+    border-top: 1px dashed #dfe3ea; padding-top: 8px;
+  }
+  .csv { background: #0b7a4b; color: #fff; border-color: #0b7a4b; }
+  .csv:hover { background: #096340; }
+
+  .tablebox { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 1000px; }
+  th, td {
+    border-bottom: 1px solid #e7ebf1;
+    padding: 9px 10px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+  }
+  th {
+    background: #f7f9fc;
+    font-size: 13px;
+    color: #344054;
+    white-space: nowrap;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { background: #eef3fb; color: #1d4ed8; }
+  th .arrow { color: #98a2b3; font-size: 11px; }
+  th.sorted .arrow { color: #2f6fed; }
+
+  td.no { color: #667085; width: 50px; }
+  td.date, td.town, td.biz { white-space: nowrap; }
+  td.date { width: 104px; }
+  td.town { width: 82px; }
+  td.biz { width: 170px; }
+  td.money { width: 130px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.status { width: 112px; }
+  td.act { width: 72px; white-space: nowrap; }
+
+  tbody tr:hover { background: #f9fbff; }
+  tbody tr.approved { background: #f2fbf5; }
+  tbody tr.approved:hover { background: #e9f7ee; }
+  tbody tr.approved td.money { color: #067647; font-weight: 700; }
+  tbody tr.rejected td.biz { color: #98a2b3; text-decoration: line-through; }
+
+  .del {
+    background: #fff; color: #d92d20; border: 1px solid #f3b8b2;
+    padding: 4px 12px; font-size: 13px; font-weight: 700;
+  }
+  .del:hover { background: #fef3f2; }
+
+  /* 목록에서 바로 바꾸는 심사 상태 */
+  select.st {
+    width: auto;
+    min-width: 92px;
+    padding: 4px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  select.st-received  { background: #fff6e8; border-color: #f0c98a; color: #b25e00; }
+  select.st-doing     { background: #eaf1ff; border-color: #b9cdfb; color: #1d4ed8; }
+  select.st-approved  { background: #e7f7ee; border-color: #a9dfc1; color: #067647; }
+  select.st-rejected  { background: #fef3f2; border-color: #f3b8b2; color: #d92d20; }
+
+  .empty { padding: 34px 10px; text-align: center; color: #98a2b3; }
+  .warn {
+    display: none;
+    margin-bottom: 16px; padding: 10px 14px;
+    background: #fffaeb; border: 1px solid #f4d27a; border-radius: 8px;
+    color: #7a5b00; font-size: 13px;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
-<h1>보조금 신청 관리</h1>
+<div class="wrap">
+  <h1>보조금 신청 관리</h1>
+  <div class="sub">보조금 신청을 접수해 등록하고, 아래 목록에서 심사 상태를 바로 바꿀 수 있습니다. 입력한 자료는 이 컴퓨터의 브라우저에 저장되어 새로고침해도 남아 있습니다.</div>
 
-<div class="box">
-<label>신청일</label>
-<input type="date" id="fDate">
-<div class="row">
-<div><label>신청인</label><input type="text" id="fName" placeholder="예: 홍길동"></div>
-<div><label>읍면</label><select id="fTown"></select></div>
-</div>
-<div class="row">
-<div><label>사업명</label><select id="fBiz"></select></div>
-<div><label>신청금액 (원)</label><input type="number" id="fAmt" min="0" step="1000" placeholder="예: 500000"></div>
-</div>
-<label>심사상태</label>
-<select id="fStatus"><option>접수</option><option>심사중</option><option>승인</option><option>반려</option></select>
-<button class="btn-add" onclick="addItem()">등록</button>
-</div>
+  <div class="warn" id="warn">
+    이 브라우저에서는 자동 저장 기능을 쓸 수 없습니다. 창을 닫으면 목록이 사라질 수 있습니다.
+  </div>
 
-<div class="box">
-<div class="search">
-<div><label>찾기 (신청인 또는 사업명)</label><input type="text" id="qText" placeholder="예: 홍길동, 청년 창업" oninput="show()"></div>
-<div><label>읍면으로 보기</label><select id="qTown" onchange="show()"><option value="">전체</option></select></div>
-<div><label>심사상태로 보기</label><select id="qStatus" onchange="show()"><option value="">전체</option><option>접수</option><option>심사중</option><option>승인</option><option>반려</option></select></div>
-</div>
-</div>
+  <div class="card">
+    <h2>보조금 신청 입력</h2>
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div class="field">
+          <label for="date">신청일 <span class="req">*</span></label>
+          <input type="date" id="date">
+        </div>
+        <div class="field">
+          <label for="name">신청인 <span class="req">*</span></label>
+          <input type="text" id="name" maxlength="40" placeholder="예) 홍길동">
+        </div>
+        <div class="field">
+          <label for="town">읍면 <span class="req">*</span></label>
+          <select id="town">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="biz">사업명 <span class="req">*</span></label>
+          <select id="biz">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="amount">신청금액(원) <span class="req">*</span></label>
+          <input type="number" id="amount" min="0" step="1000" placeholder="예) 1500000">
+        </div>
+        <div class="field">
+          <label for="status">심사상태 <span class="req">*</span></label>
+          <select id="status">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+      </div>
+      <div class="btns">
+        <button type="submit" class="primary">등록</button>
+        <button type="reset" class="ghost" id="resetBtn">입력칸 비우기</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
 
-<div class="count" id="count"></div>
-<div class="sum" id="sum"></div>
-<button onclick="downCsv()" style="background:#0a7b3d;color:#fff;margin-bottom:10px">지금 보이는 목록 CSV로 저장 (엑셀용)</button>
-<div class="box" style="overflow:auto">
-<table>
-<thead><tr><th>번호</th><th class="sort" id="thDate" onclick="toggleSort()" title="누르면 날짜 순으로 바뀝니다">신청일 ▲▼</th><th>신청인</th><th>읍면</th><th>사업명</th><th>신청금액</th><th>심사상태</th><th>삭제</th></tr></thead>
-<tbody id="list"></tbody>
-</table>
+  <div class="card">
+    <div class="listhead">
+      <h2>보조금 신청 목록</h2>
+      <div class="count">
+        표시 <b id="count">0</b>건
+        <span class="sep">/</span> 전체 <b id="countAll">0</b>건
+        <span class="sep">|</span> 접수 <b id="cReceived">0</b>
+        · 심사중 <b id="cDoing">0</b>
+        · 승인 <b id="cApproved">0</b>
+        · 반려 <b id="cRejected">0</b>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="label">승인된 신청금액 합계
+        <span class="note">(아래에 보이는 목록 기준)</span>
+      </div>
+      <div class="value"><span id="sumApproved">0</span> <small>원</small></div>
+      <div class="side">승인 <b id="sumCount">0</b>건 · 전체 신청금액 <span id="sumAll">0</span>원</div>
+    </div>
+
+    <div class="filters">
+      <span class="tag">찾기</span>
+      <input type="search" id="q" placeholder="신청인 이름 또는 사업명으로 검색">
+      <select id="fTown" title="읍면으로 골라 보기"></select>
+      <select id="fBiz" title="사업명으로 골라 보기"></select>
+      <select id="fStatus" title="심사 상태로 골라 보기"></select>
+      <button type="button" class="ghost" id="clearFilter">조건 지우기</button>
+      <button type="button" class="csv" id="csvBtn">엑셀(CSV)로 내려받기</button>
+      <div class="hintline">
+        내려받으면 지금 화면에 보이는 목록만, 보이는 순서 그대로 저장됩니다. 받은 파일을 두 번 눌러 열면 엑셀에서 한글이 깨지지 않습니다.
+      </div>
+    </div>
+
+    <div class="tablebox">
+      <table>
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th class="sortable" id="thDate" title="눌러서 신청일 순으로 정렬">신청일 <span class="arrow" id="arrowDate">▼</span></th>
+            <th>읍면</th>
+            <th>사업명</th>
+            <th>신청인</th>
+            <th>신청금액(원)</th>
+            <th>심사상태</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">아직 등록된 신청이 없습니다.</div>
+  </div>
 </div>
 
 <script>
-var towns=["거창읍","주상면","웅양면","고제면","북상면","위천면","마리면","남상면","남하면","신원면","가조면","가북면"];
-var bizs=["소규모 주택 수리 지원","농기계 구입 지원","경로당 운영 지원","청년 창업 지원","마을 공동체 활동 지원","친환경 농자재 지원"];
-var statuses=["접수","심사중","승인","반려"];
-var KEY="geochang_subsidy_list";
-var items=[];
-try{items=JSON.parse(localStorage.getItem(KEY)||"[]");}catch(e){items=[];}
+(function () {
+  "use strict";
 
-var fTown=document.getElementById("fTown");
-towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;fTown.appendChild(o);});
-var qTown=document.getElementById("qTown");
-towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;o.value=t;qTown.appendChild(o);});
-var fBiz=document.getElementById("fBiz");
-bizs.forEach(function(t){var o=document.createElement("option");o.textContent=t;fBiz.appendChild(o);});
+  var KEY = "geochang_subsidy_list_v1";
+  var STATUS = ["접수", "심사중", "승인", "반려"];
+  var STCLASS = {
+    "접수": "st-received", "심사중": "st-doing",
+    "승인": "st-approved", "반려": "st-rejected"
+  };
+  var TOWNS = ["거창읍", "주상면", "웅양면", "고제면", "북상면", "위천면",
+               "마리면", "남상면", "남하면", "신원면", "가조면", "가북면"];
+  var BIZ = [
+    "소규모 주택 수리 지원",
+    "농기계 구입 지원",
+    "경로당 운영 지원",
+    "청년 창업 지원",
+    "마을 공동체 활동 지원",
+    "친환경 농자재 지원"
+  ];
 
-var sortAsc=true;
-function toggleSort(){sortAsc=!sortAsc;show();}
+  var list = [];            /* 저장된 전체 신청 */
+  var seq = 1;              /* 신청 고유 번호표 */
+  var sortAsc = false;      /* 신청일 정렬: false = 최근 날짜 먼저 */
+  var storageOK = true;
 
-var fDate=document.getElementById("fDate");
-function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
-fDate.value=today();
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $("form"), tbody = $("tbody"), msgEl = $("msg"), emptyEl = $("empty");
 
-function save(){localStorage.setItem(KEY,JSON.stringify(items));}
-function num(n){n=Number(n||0);return n.toLocaleString("ko-KR")+"원";}
-function addItem(){
-var name=document.getElementById("fName").value.trim();
-var amt=Number(document.getElementById("fAmt").value);
-if(!fDate.value){alert("신청일을 입력해 주세요.");return;}
-if(!name){alert("신청인을 입력해 주세요.");return;}
-if(!(amt>0)){alert("신청금액을 입력해 주세요.");return;}
-items.unshift({date:fDate.value,name:name,town:fTown.value,biz:fBiz.value,amt:amt,status:document.getElementById("fStatus").value});
-save();show();
-document.getElementById("fName").value="";document.getElementById("fAmt").value="";
-document.getElementById("fStatus").value="접수";
-}
-function changeStatus(i,v){items[i].status=v;save();show();}
-function delItem(i){if(confirm("삭제할까요?")){items.splice(i,1);save();show();}}
-function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function getRows(){
-var q=(document.getElementById("qText").value||"").trim();
-var qt=document.getElementById("qTown").value;
-var qs=document.getElementById("qStatus").value;
-var rows=[];
-items.forEach(function(m,i){
-if(qt&&m.town!==qt)return;
-if(qs&&m.status!==qs)return;
-if(q&&(m.name||"").indexOf(q)<0&&(m.biz||"").indexOf(q)<0)return;
-rows.push({m:m,i:i});
-});
-rows.sort(function(a,b){if(sortAsc)return a.m.date<b.m.date?-1:1;return a.m.date>b.m.date?-1:1;});
-return rows;
-}
-function downCsv(){
-var rows=getRows();
-if(!rows.length){alert("저장할 목록이 없습니다.");return;}
-function q(s){return '"'+String(s==null?"":s).replace(/"/g,'""')+'"';}
-var lines=["신청일,신청인,읍면,사업명,신청금액,심사상태"];
-rows.forEach(function(r){var m=r.m;lines.push([m.date,m.name,m.town,m.biz,m.amt,m.status].map(q).join(","));});
-var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
-var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="보조금신청목록.csv";a.click();
-setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-}
-function show(){
-var tb=document.getElementById("list");tb.innerHTML="";
-var rows=getRows();
-document.getElementById("count").textContent="전체 "+items.length+"건 중 "+rows.length+"건 보기";
-var sum=0;
-rows.forEach(function(r){if(r.m.status==="승인")sum+=Number(r.m.amt||0);});
-document.getElementById("sum").textContent="승인된 신청금액 합계: "+sum.toLocaleString("ko-KR")+"원 (지금 보이는 목록 기준)";
-document.getElementById("thDate").textContent="신청일 "+(sortAsc?"▲":"▼");
-rows.forEach(function(r,idx){
-var m=r.m,i=r.i;
-var tr=document.createElement("tr");
-tr.innerHTML="<td>"+(idx+1)+"</td><td>"+esc(m.date)+"</td><td>"+esc(m.name)+"</td><td>"+esc(m.town)+"</td><td>"+esc(m.biz)+"</td><td class='amt'>"+esc(Number(m.amt||0).toLocaleString("ko-KR"))+"원</td>";
-var td=document.createElement("td");
-var s=document.createElement("select");s.className="status";
-statuses.forEach(function(st){var o=document.createElement("option");o.textContent=st;if(m.status===st)o.selected=true;s.appendChild(o);});
-s.onchange=(function(idx,sel){return function(){changeStatus(idx,sel.value);};})(i,s);
-td.appendChild(s);tr.appendChild(td);
-var td2=document.createElement("td");
-var b=document.createElement("button");b.className="del";b.textContent="삭제";
-b.onclick=(function(idx){return function(){delItem(idx);};})(i);
-td2.appendChild(b);tr.appendChild(td2);
-tb.appendChild(tr);
-});
-}
-show();
+  /* ---------- 저장 / 불러오기 ---------- */
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+      list = list.filter(function (r) { return r && typeof r === "object"; });
+
+      /* 빠진 항목을 채워 준다. */
+      list.forEach(function (r) {
+        if (STATUS.indexOf(r.status) < 0) r.status = "접수";
+        if (!r.biz) r.biz = BIZ[0];
+        r.amount = toAmount(r.amount);
+        if (r.id == null) r.id = seq++;
+        else if (Number(r.id) >= seq) seq = Number(r.id) + 1;
+      });
+    } catch (e) {
+      storageOK = false;
+      list = [];
+    }
+    if (!storageOK) $("warn").style.display = "block";
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+    } catch (e) {
+      storageOK = false;
+      $("warn").style.display = "block";
+    }
+  }
+
+  /* ---------- 작은 도구들 ---------- */
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* 금액을 숫자로 바꾼다. 값이 없거나 숫자가 아니면 0. */
+  function toAmount(v) {
+    var n = Number(String(v == null ? "" : v).replace(/[^0-9.-]/g, ""));
+    return isFinite(n) ? Math.round(n) : 0;
+  }
+
+  /* 1234567 -> "1,234,567" */
+  function comma(n) {
+    return toAmount(n).toLocaleString("ko-KR");
+  }
+
+  function fmt(d) {
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  function todayStr() { return fmt(new Date()); }
+
+  /* 받침 여부에 따라 "로" / "으로"를 골라 준다. (접수로, 심사중으로) */
+  function josa(word) {
+    var s = String(word || "");
+    if (!s) return "로";
+    var code = s.charCodeAt(s.length - 1);
+    if (code < 0xac00 || code > 0xd7a3) return "로";
+    return (code - 0xac00) % 28 === 0 ? "로" : "으로";
+  }
+
+  function showMsg(text, type) {
+    msgEl.textContent = text;
+    msgEl.className = "msg " + type;
+    if (type === "ok") {
+      window.clearTimeout(showMsg.t);
+      showMsg.t = window.setTimeout(function () { msgEl.className = "msg"; }, 3000);
+    }
+  }
+
+  function fillSelect(sel, items, allLabel) {
+    var html = allLabel ? '<option value="">' + allLabel + "</option>" : '<option value="">선택하세요</option>';
+    html += items.map(function (v) { return "<option>" + esc(v) + "</option>"; }).join("");
+    sel.innerHTML = html;
+  }
+
+  /* ---------- 검색 · 고르기 · 정렬을 거친 목록 ---------- */
+
+  function view() {
+    var q = $("q").value.trim().toLowerCase();
+    var town = $("fTown").value;
+    var biz = $("fBiz").value;
+    var status = $("fStatus").value;
+
+    var rows = list.filter(function (r) {
+      if (town && r.town !== town) return false;
+      if (biz && r.biz !== biz) return false;
+      if (status && r.status !== status) return false;
+      if (q) {
+        var hay = (String(r.name || "") + " " + String(r.biz || "")).toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+
+    rows.sort(function (a, b) {
+      var x = String(a.date || ""), y = String(b.date || "");
+      if (x === y) return (Number(a.id) || 0) - (Number(b.id) || 0);
+      return sortAsc ? (x < y ? -1 : 1) : (x > y ? -1 : 1);
+    });
+    return rows;
+  }
+
+  function render() {
+    var rows = view();
+
+    var c = { "접수": 0, "심사중": 0, "승인": 0, "반려": 0 }, sumApp = 0, sumAll = 0, cntApp = 0;
+    rows.forEach(function (r) {
+      if (c[r.status] == null) c[r.status] = 0;
+      c[r.status]++;
+      sumAll += toAmount(r.amount);
+      if (r.status === "승인") { sumApp += toAmount(r.amount); cntApp++; }
+    });
+
+    $("count").textContent = rows.length;
+    $("countAll").textContent = list.length;
+    $("cReceived").textContent = c["접수"] || 0;
+    $("cDoing").textContent = c["심사중"] || 0;
+    $("cApproved").textContent = c["승인"] || 0;
+    $("cRejected").textContent = c["반려"] || 0;
+
+    $("sumApproved").textContent = comma(sumApp);
+    $("sumCount").textContent = cntApp;
+    $("sumAll").textContent = comma(sumAll);
+
+    $("arrowDate").textContent = sortAsc ? "▲" : "▼";
+    $("thDate").className = "sortable sorted";
+
+    if (!rows.length) {
+      emptyEl.textContent = list.length ? "조건에 맞는 신청이 없습니다." : "아직 등록된 신청이 없습니다.";
+      emptyEl.style.display = "block";
+    } else {
+      emptyEl.style.display = "none";
+    }
+
+    tbody.innerHTML = rows.map(function (row, i) {
+      var opts = STATUS.map(function (s) {
+        return '<option value="' + s + '"' + (row.status === s ? " selected" : "") + ">" + s + "</option>";
+      }).join("");
+      var cls = STCLASS[row.status] || "st-received";
+
+      return '<tr class="' + (row.status === "승인" ? "approved" : row.status === "반려" ? "rejected" : "") + '">' +
+        '<td class="no">' + (i + 1) + "</td>" +
+        '<td class="date">' + esc(row.date) + "</td>" +
+        '<td class="town">' + esc(row.town) + "</td>" +
+        '<td class="biz">' + esc(row.biz) + "</td>" +
+        "<td>" + esc(row.name) + "</td>" +
+        '<td class="money">' + comma(row.amount) + "</td>" +
+        '<td class="status"><select class="st ' + cls + '" data-id="' + row.id + '" title="심사 상태 바꾸기">' + opts + "</select></td>" +
+        '<td class="act"><button type="button" class="del" data-id="' + row.id + '">삭제</button></td>' +
+      "</tr>";
+    }).join("");
+  }
+
+  function findById(id) {
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].id) === String(id)) return i;
+    }
+    return -1;
+  }
+
+  /* ---------- 등록 ---------- */
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    var date = $("date").value.trim();
+    var name = $("name").value.trim();
+    var town = $("town").value;
+    var biz = $("biz").value;
+    var amountRaw = $("amount").value.trim();
+    var status = $("status").value;
+
+    if (!date) { showMsg("신청일을 입력하세요.", "err"); $("date").focus(); return; }
+    if (!name) { showMsg("신청인 이름을 입력하세요.", "err"); $("name").focus(); return; }
+    if (!town) { showMsg("읍면을 선택하세요.", "err"); $("town").focus(); return; }
+    if (!biz) { showMsg("사업명을 선택하세요.", "err"); $("biz").focus(); return; }
+    if (amountRaw === "") { showMsg("신청금액을 입력하세요.", "err"); $("amount").focus(); return; }
+    if (!/^[0-9]+$/.test(amountRaw)) {
+      showMsg("신청금액은 0 이상의 숫자로 입력하세요. (예: 1500000)", "err");
+      $("amount").focus(); return;
+    }
+    if (!status) { showMsg("심사상태를 선택하세요.", "err"); $("status").focus(); return; }
+
+    var amount = toAmount(amountRaw);
+
+    list.push({
+      id: seq++,
+      date: date,
+      name: name,
+      town: town,
+      biz: biz,
+      amount: amount,
+      status: status,
+      savedAt: new Date().toISOString()
+    });
+    save();
+    render();
+    showMsg("등록되었습니다. (" + name + " · " + biz + " · " + comma(amount) + "원, 전체 " + list.length + "건)", "ok");
+
+    $("name").value = "";
+    $("amount").value = "";
+    $("town").value = "";
+    $("biz").value = "";
+    $("status").value = "";
+    $("date").value = todayStr();
+    $("name").focus();
+  });
+
+  /* ---------- 목록 안에서 심사 상태 바꾸기 / 삭제 ---------- */
+
+  tbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("select.st");
+    if (!sel) return;
+    var i = findById(sel.getAttribute("data-id"));
+    if (i < 0) return;
+    var row = list[i];
+    row.status = sel.value;
+    save();
+    render();
+    showMsg("'" + row.name + "' 님의 신청을 " + row.status + josa(row.status) + " 바꿨습니다.", "ok");
+  });
+
+  tbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".del");
+    if (!btn) return;
+    var i = findById(btn.getAttribute("data-id"));
+    if (i < 0) return;
+    var row = list[i];
+    if (!window.confirm("'" + row.name + "' 님의 신청(" + row.biz + ")을 삭제할까요?")) return;
+    list.splice(i, 1);
+    save();
+    render();
+    showMsg("삭제되었습니다.", "ok");
+  });
+
+  /* ---------- 검색창 · 고르기 칸 · 정렬 ---------- */
+
+  $("q").addEventListener("input", render);
+  $("fTown").addEventListener("change", render);
+  $("fBiz").addEventListener("change", render);
+  $("fStatus").addEventListener("change", render);
+
+  $("clearFilter").addEventListener("click", function () {
+    $("q").value = "";
+    $("fTown").value = "";
+    $("fBiz").value = "";
+    $("fStatus").value = "";
+    render();
+    $("q").focus();
+  });
+
+  /* ---------- 지금 보이는 목록을 CSV(엑셀) 파일로 내려받기 ---------- */
+
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    if (/[",\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadCsv(text, filename) {
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  $("csvBtn").addEventListener("click", function () {
+    var rows = view();   /* 검색·읍면·사업명·상태 조건과 신청일 정렬이 적용된, 지금 화면의 목록 */
+    if (!rows.length) {
+      showMsg("내려받을 신청이 없습니다. 검색 조건을 확인해 주세요.", "err");
+      return;
+    }
+
+    var head = ["번호", "신청일", "읍면", "사업명", "신청인", "신청금액", "심사상태"];
+    var lines = [head.map(csvCell).join(",")];
+    var sumApp = 0;
+    rows.forEach(function (r, i) {
+      if (r.status === "승인") sumApp += toAmount(r.amount);
+      lines.push([
+        i + 1, r.date, r.town, r.biz, r.name, toAmount(r.amount), r.status
+      ].map(csvCell).join(","));
+    });
+    /* 맨 끝에 승인 합계 줄을 붙여 준다. */
+    lines.push(["", "", "", "", "승인 합계", sumApp, ""].map(csvCell).join(","));
+
+    /* 맨 앞의 \uFEFF(BOM) 덕분에 엑셀에서 한글이 깨지지 않는다. 줄바꿈은 엑셀용으로 CRLF. */
+    var csv = "\uFEFF" + lines.join("\r\n") + "\r\n";
+    var fname = "보조금신청목록_" + todayStr() + ".csv";
+    try {
+      downloadCsv(csv, fname);
+      showMsg(rows.length + "건을 내려받았습니다. (" + fname + " — 내려받은 파일 폴더에서 확인하세요)", "ok");
+    } catch (err) {
+      showMsg("내려받기에 실패했습니다. 다른 브라우저(엣지·크롬)에서 열어 다시 시도해 주세요.", "err");
+    }
+  });
+
+  /* 신청일 제목을 누르면 날짜 순으로 정렬(한 번 더 누르면 반대 순서) */
+  $("thDate").addEventListener("click", function () {
+    sortAsc = !sortAsc;
+    render();
+  });
+
+  $("resetBtn").addEventListener("click", function () {
+    window.setTimeout(function () {
+      $("date").value = todayStr();
+      $("name").focus();
+    }, 0);
+  });
+
+  /* ---------- 시작 ---------- */
+
+  fillSelect($("town"), TOWNS, null);
+  fillSelect($("biz"), BIZ, null);
+  fillSelect($("status"), STATUS, null);
+  fillSelect($("fTown"), TOWNS, "읍면 전체");
+  fillSelect($("fBiz"), BIZ, "사업명 전체");
+  fillSelect($("fStatus"), STATUS, "상태 전체");
+
+  load();
+  save();
+  $("date").value = todayStr();
+  render();
+})();
 </script>
 </body>
 </html>
