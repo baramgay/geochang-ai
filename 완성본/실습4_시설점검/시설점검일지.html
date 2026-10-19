@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>시설 점검 일지</title>
+<style>
+body{font-family:맑은고딕,sans-serif;max-width:1000px;margin:20px auto;padding:0 15px;background:#f4f6f8}
+h1{text-align:center}
+.box{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin-bottom:15px}
+label{display:block;margin:8px 0 3px;font-weight:bold}
+input,select,textarea{width:100%;padding:8px;box-sizing:border-box;border:1px solid #bbb;border-radius:4px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{padding:10px 16px;border:none;border-radius:4px;cursor:pointer}
+.btn-add{background:#1a73e8;color:#fff;width:100%;margin-top:12px;font-size:16px}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#eef2f7}
+td.content{text-align:left;white-space:pre-wrap}
+.del{background:#fff;border:1px solid #ccc}
+.count{margin:5px 0;font-weight:bold}
+th.sort{cursor:pointer;text-decoration:underline}
+.search{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+tr.emergency{background:#ffe8e8}
+td.emergency{color:#c00;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>시설 점검 일지</h1>
+
+<div class="box">
+<label>점검일</label>
+<input type="date" id="fDate">
+<div class="row">
+<div><label>읍면</label><select id="fTown"></select></div>
+<div><label>시설명</label><input type="text" id="fName" placeholder="예: 거창문화센터"></div>
+</div>
+<div class="row">
+<div><label>점검항목</label><input type="text" id="fItem" placeholder="예: 소방, 전기, 위생"></div>
+<div><label>결과</label><select id="fResult"><option>양호</option><option>보수 필요</option><option>긴급 조치</option></select></div>
+</div>
+<div class="row">
+<div><label>다음 점검일 (결과에 따라 자동)</label><input type="date" id="fNext"></div>
+<div><label>담당자</label><input type="text" id="fManager" placeholder="예: 김거창"></div>
+</div>
+<label>조치사항</label>
+<textarea id="fAct" rows="3" placeholder="조치 내용을 적어 주세요 (없으면 없음)"></textarea>
+<button class="btn-add" onclick="addItem()">등록</button>
+</div>
+
+<div class="box">
+<div class="search">
+<div><label>찾기 (시설명 또는 조치사항)</label><input type="text" id="qText" placeholder="예: 문화센터, 보수" oninput="show()"></div>
+<div><label>읍면으로 보기</label><select id="qTown" onchange="show()"><option value="">전체</option></select></div>
+<div><label>결과로 보기</label><select id="qResult" onchange="show()"><option value="">전체</option><option>양호</option><option>보수 필요</option><option>긴급 조치</option></select></div>
+</div>
+</div>
+
+<div class="count" id="count"></div>
+<button onclick="downCsv()" style="background:#0a7b3d;color:#fff;margin-bottom:10px">지금 보이는 목록 CSV로 저장 (엑셀용)</button>
+<div class="box" style="overflow:auto">
+<table>
+<thead><tr><th>번호</th><th class="sort" id="thDate" onclick="toggleSort()" title="누르면 날짜 순으로 바뀝니다">점검일 ▲▼</th><th>읍면</th><th>시설명</th><th>점검항목</th><th>결과</th><th>조치사항</th><th>다음 점검일</th><th>담당자</th><th>삭제</th></tr></thead>
+<tbody id="list"></tbody>
+</table>
+</div>
+
+<script>
+var towns=["거창읍","주상면","웅양면","고제면","북상면","위천면","마리면","남상면","남하면","신원면","가조면","가북면"];
+var KEY="geochang_check_list";
+var items=[];
+try{items=JSON.parse(localStorage.getItem(KEY)||"[]");}catch(e){items=[];}
+
+var fTown=document.getElementById("fTown");
+towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;fTown.appendChild(o);});
+var qTown=document.getElementById("qTown");
+towns.forEach(function(t){var o=document.createElement("option");o.textContent=t;o.value=t;qTown.appendChild(o);});
+var sortAsc=true;
+function toggleSort(){sortAsc=!sortAsc;show();}
+
+var fDate=document.getElementById("fDate");
+var fResult=document.getElementById("fResult");
+var fNext=document.getElementById("fNext");
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+function gapDays(r){if(r==="긴급 조치")return 3;if(r==="보수 필요")return 14;return 90;}
+function plusDays(s,n){var d=new Date(s);if(isNaN(d))return "";d.setDate(d.getDate()+n);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+function autoNext(){if(!fDate.value){fNext.value="";return;}fNext.value=plusDays(fDate.value,gapDays(fResult.value));}
+fDate.value=today();
+autoNext();
+fDate.onchange=autoNext;
+fResult.onchange=autoNext;
+
+function save(){localStorage.setItem(KEY,JSON.stringify(items));}
+function addItem(){
+var fac=document.getElementById("fName").value.trim();
+var item=document.getElementById("fItem").value.trim();
+var act=document.getElementById("fAct").value.trim();
+if(!fDate.value){alert("점검일을 입력해 주세요.");return;}
+if(!fac){alert("시설명을 입력해 주세요.");return;}
+if(!item){alert("점검항목을 입력해 주세요.");return;}
+items.unshift({date:fDate.value,town:fTown.value,name:fac,item:item,result:fResult.value,act:act,next:fNext.value,manager:document.getElementById("fManager").value.trim()});
+save();show();
+document.getElementById("fName").value="";document.getElementById("fItem").value="";document.getElementById("fAct").value="";document.getElementById("fManager").value="";
+document.getElementById("fResult").value="양호";autoNext();
+}
+function delItem(i){if(confirm("삭제할까요?")){items.splice(i,1);save();show();}}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function getRows(){
+var q=(document.getElementById("qText").value||"").trim();
+var qt=document.getElementById("qTown").value;
+var qr=document.getElementById("qResult").value;
+var rows=[];
+items.forEach(function(m,i){
+if(qt&&m.town!==qt)return;
+if(qr&&m.result!==qr)return;
+if(q&&(m.name||"").indexOf(q)<0&&(m.act||"").indexOf(q)<0&&(m.item||"").indexOf(q)<0)return;
+rows.push({m:m,i:i});
+});
+rows.sort(function(a,b){if(sortAsc)return a.m.date<b.m.date?-1:1;return a.m.date>b.m.date?-1:1;});
+return rows;
+}
+function downCsv(){
+var rows=getRows();
+if(!rows.length){alert("저장할 목록이 없습니다.");return;}
+function q(s){return '"'+String(s==null?"":s).replace(/"/g,'""')+'"';}
+var lines=["점검일,읍면,시설명,점검항목,결과,조치사항,다음점검일,담당자"];
+rows.forEach(function(r){var m=r.m;lines.push([m.date,m.town,m.name,m.item,m.result,m.act,m.next,m.manager].map(q).join(","));});
+var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="시설점검일지.csv";a.click();
+setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+}
+function show(){
+var tb=document.getElementById("list");tb.innerHTML="";
+var rows=getRows();
+document.getElementById("count").textContent="전체 "+items.length+"건 중 "+rows.length+"건 보기";
+document.getElementById("thDate").textContent="점검일 "+(sortAsc?"▲":"▼");
+rows.forEach(function(r,idx){
+var m=r.m,i=r.i;
+var em=(m.result==="긴급 조치");
+var tr=document.createElement("tr");
+if(em)tr.className="emergency";
+tr.innerHTML="<td>"+(idx+1)+"</td><td>"+esc(m.date)+"</td><td>"+esc(m.town)+"</td><td>"+esc(m.name)+"</td><td>"+esc(m.item)+"</td><td class='"+(em?"emergency":"")+"'>"+esc(m.result)+"</td><td class='content'>"+esc(m.act)+"</td><td>"+esc(m.next)+"</td><td>"+esc(m.manager)+"</td>";
+var td2=document.createElement("td");
+var b=document.createElement("button");b.className="del";b.textContent="삭제";
+b.onclick=(function(idx){return function(){delItem(idx);};})(i);
+td2.appendChild(b);tr.appendChild(td2);
+tb.appendChild(tr);
+});
+}
+show();
+</script>
+</body>
+</html>
